@@ -30,6 +30,13 @@ import {
   Cancel01Icon,
   MailAtSign01Icon,
   Tag01Icon,
+  UserGroupIcon,
+  UserCheck01Icon,
+  Airplane01Icon,
+  ShieldUserIcon,
+  LoginCircle01Icon,
+  LogoutCircle01Icon,
+  Building06Icon,
 } from '@hugeicons/core-free-icons'
 
 export const iconMap = {
@@ -63,6 +70,13 @@ export const iconMap = {
   close: Cancel01Icon,
   mail: MailAtSign01Icon,
   tag: Tag01Icon,
+  users: UserGroupIcon,
+  userCheck: UserCheck01Icon,
+  airplane: Airplane01Icon,
+  shield: ShieldUserIcon,
+  checkIn: LoginCircle01Icon,
+  checkOut: LogoutCircle01Icon,
+  building: Building06Icon,
 } as const
 
 export type IconName = keyof typeof iconMap
