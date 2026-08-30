@@ -1,6 +1,11 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateEmployeeDto, UpdateEmployeeDto } from './dto/employee.dto';
+
+function generateTempPassword(): string {
+  return Math.random().toString(36).slice(-6) + Math.random().toString(36).slice(-4).toUpperCase();
+}
 
 const includeRelations = {
   branch: true,
@@ -77,5 +82,39 @@ export class EmployeesService {
     await this.findOne(organizationId, id);
     await this.prisma.employee.delete({ where: { id } });
     return { success: true };
+  }
+
+  async findMine(userId: string) {
+    const employee = await this.prisma.employee.findFirst({
+      where: { userId },
+      include: includeRelations,
+    });
+    if (!employee) throw new NotFoundException('No employee profile linked to this account');
+    return employee;
+  }
+
+  async createLogin(organizationId: string, id: string) {
+    const employee = await this.findOne(organizationId, id);
+    if (employee.userId) throw new ConflictException('Employee already has a login');
+
+    const existingUser = await this.prisma.user.findUnique({ where: { email: employee.email } });
+    if (existingUser) throw new ConflictException('A user with this email already exists');
+
+    const tempPassword = generateTempPassword();
+    const passwordHash = await bcrypt.hash(tempPassword, 10);
+
+    const user = await this.prisma.user.create({
+      data: {
+        email: employee.email,
+        passwordHash,
+        name: employee.fullName,
+        role: 'EMPLOYEE',
+        organizationId,
+      },
+    });
+
+    await this.prisma.employee.update({ where: { id }, data: { userId: user.id } });
+
+    return { email: user.email, tempPassword };
   }
 }

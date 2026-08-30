@@ -13,6 +13,7 @@ export const menuItems: NavItem[] = [
   { label: 'Designations', path: '/designations', icon: 'tag' },
   { label: 'Attendance', path: '/attendance', icon: 'clock' },
   { label: 'Leave', path: '/leave', icon: 'calendar' },
+  { label: 'Holidays', path: '/holidays', icon: 'activities' },
   { label: 'Payroll', path: '/payroll', icon: 'deals' },
   { label: 'Recruitment', path: '/recruitment', icon: 'leads' },
   { label: 'Documents', path: '/documents', icon: 'inbox' },

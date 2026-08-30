@@ -17,6 +17,11 @@ export class EmployeesController {
     return this.service.list(user.organizationId!, search);
   }
 
+  @Get('me')
+  findMine(@CurrentUser() user: AuthUser) {
+    return this.service.findMine(user.userId);
+  }
+
   @Get(':id')
   findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.service.findOne(user.organizationId!, id);
@@ -38,5 +43,11 @@ export class EmployeesController {
   @Roles('ORG_ADMIN', 'HR_MANAGER')
   remove(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.service.remove(user.organizationId!, id);
+  }
+
+  @Post(':id/create-login')
+  @Roles('ORG_ADMIN', 'HR_MANAGER')
+  createLogin(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    return this.service.createLogin(user.organizationId!, id);
   }
 }

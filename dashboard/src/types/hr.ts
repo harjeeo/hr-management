@@ -50,3 +50,110 @@ export interface Employee {
   designation?: Designation | null
   manager?: { id: string; fullName: string } | null
 }
+
+export interface EmployeeRef {
+  id: string
+  fullName: string
+  employeeCode: string
+}
+
+export type AttendanceStatus =
+  | 'PRESENT'
+  | 'ABSENT'
+  | 'LATE'
+  | 'HALF_DAY'
+  | 'WORK_FROM_HOME'
+  | 'HOLIDAY'
+  | 'WEEKLY_OFF'
+  | 'ON_LEAVE'
+
+export interface Attendance {
+  id: string
+  date: string
+  checkIn?: string | null
+  checkOut?: string | null
+  status: AttendanceStatus
+  notes?: string | null
+  employee?: EmployeeRef
+}
+
+export type CorrectionStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
+
+export interface AttendanceCorrection {
+  id: string
+  date: string
+  requestedCheckIn?: string | null
+  requestedCheckOut?: string | null
+  reason: string
+  status: CorrectionStatus
+  reviewNote?: string | null
+  employee?: EmployeeRef
+}
+
+export interface LeaveType {
+  id: string
+  name: string
+  isPaid: boolean
+  defaultDaysPerYear: number
+}
+
+export interface LeaveBalance {
+  id: string
+  year: number
+  allocated: number
+  used: number
+  leaveType: LeaveType
+}
+
+export type LeaveRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
+
+export interface LeaveRequest {
+  id: string
+  startDate: string
+  endDate: string
+  days: number
+  reason?: string | null
+  status: LeaveRequestStatus
+  reviewNote?: string | null
+  leaveType: LeaveType
+  employee?: EmployeeRef
+}
+
+export type HolidayType = 'PUBLIC' | 'FESTIVAL' | 'COMPANY' | 'OPTIONAL'
+
+export interface Holiday {
+  id: string
+  name: string
+  date: string
+  type: HolidayType
+}
+
+export type DocumentCategory =
+  | 'ID_PROOF'
+  | 'PAN'
+  | 'PASSPORT'
+  | 'DRIVING_LICENSE'
+  | 'EDUCATION_CERTIFICATE'
+  | 'EXPERIENCE_LETTER'
+  | 'OFFER_LETTER'
+  | 'APPOINTMENT_LETTER'
+  | 'EMPLOYMENT_AGREEMENT'
+  | 'SALARY_DOCUMENT'
+  | 'OTHER'
+
+export interface EmployeeDocument {
+  id: string
+  category: DocumentCategory
+  fileName: string
+  fileUrl: string
+  expiryDate?: string | null
+  createdAt: string
+}
+
+export interface AppNotification {
+  id: string
+  type: string
+  message: string
+  isRead: boolean
+  createdAt: string
+}

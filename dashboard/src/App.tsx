@@ -8,16 +8,17 @@ import EmployeesPage from './pages/Employees'
 import BranchesPage from './pages/Branches'
 import DepartmentsPage from './pages/Departments'
 import DesignationsPage from './pages/Designations'
+import AttendancePage from './pages/Attendance'
+import LeavePage from './pages/Leave'
+import HolidaysPage from './pages/Holidays'
+import DocumentsPage from './pages/Documents'
 import SuperAdminOrganizationsPage from './pages/SuperAdminOrganizations'
 import PlaceholderPage from './pages/Placeholder'
 import { useAuth } from './context/AuthContext'
 
 const comingSoon = [
-  { path: '/attendance', label: 'Attendance' },
-  { path: '/leave', label: 'Leave' },
   { path: '/payroll', label: 'Payroll' },
   { path: '/recruitment', label: 'Recruitment' },
-  { path: '/documents', label: 'Documents' },
   { path: '/reports', label: 'Reports' },
   { path: '/announcements', label: 'Announcements' },
   { path: '/settings', label: 'Settings' },
@@ -33,6 +34,10 @@ function AppShell() {
         <Route path="/branches" element={<BranchesPage />} />
         <Route path="/departments" element={<DepartmentsPage />} />
         <Route path="/designations" element={<DesignationsPage />} />
+        <Route path="/attendance" element={<AttendancePage />} />
+        <Route path="/leave" element={<LeavePage />} />
+        <Route path="/holidays" element={<HolidaysPage />} />
+        <Route path="/documents" element={<DocumentsPage />} />
         <Route path="/super-admin/organizations" element={<SuperAdminOrganizationsPage />} />
         {comingSoon.map((item) => (
           <Route key={item.path} path={item.path} element={<PlaceholderPage title={item.label} />} />

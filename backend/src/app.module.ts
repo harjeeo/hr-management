@@ -8,6 +8,11 @@ import { DepartmentsModule } from './departments/departments.module';
 import { DesignationsModule } from './designations/designations.module';
 import { EmployeesModule } from './employees/employees.module';
 import { SuperAdminModule } from './super-admin/super-admin.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { AttendanceModule } from './attendance/attendance.module';
+import { LeaveModule } from './leave/leave.module';
+import { HolidaysModule } from './holidays/holidays.module';
+import { DocumentsModule } from './documents/documents.module';
 
 @Module({
   imports: [
@@ -20,6 +25,11 @@ import { SuperAdminModule } from './super-admin/super-admin.module';
     DesignationsModule,
     EmployeesModule,
     SuperAdminModule,
+    NotificationsModule,
+    AttendanceModule,
+    LeaveModule,
+    HolidaysModule,
+    DocumentsModule,
   ],
 })
 export class AppModule {}
