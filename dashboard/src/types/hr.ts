@@ -198,6 +198,111 @@ export interface Payslip {
   payrollRun?: { month: number; year: number; status: PayrollRunStatus }
 }
 
+export type BillingCycle = 'MONTHLY' | 'YEARLY'
+
+export interface Plan {
+  id: string
+  name: string
+  price: number
+  billingCycle: BillingCycle
+  employeeLimit: number
+  features: string[]
+  isActive: boolean
+}
+
+export type SubscriptionStatus = 'TRIAL' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED'
+
+export interface Invoice {
+  id: string
+  amount: number
+  status: 'PENDING' | 'PAID' | 'FAILED'
+  issuedAt: string
+  paidAt?: string | null
+}
+
+export interface Subscription {
+  id: string
+  status: SubscriptionStatus
+  trialEndsAt?: string | null
+  currentPeriodEnd?: string | null
+  plan: Plan
+  invoices?: Invoice[]
+  organization?: { id: string; name: string; slug: string }
+}
+
+export type JobStatus = 'OPEN' | 'CLOSED'
+
+export interface JobOpening {
+  id: string
+  title: string
+  location?: string | null
+  employmentType: Employee['employmentType']
+  salaryMin?: number | null
+  salaryMax?: number | null
+  description?: string | null
+  status: JobStatus
+  department?: Department | null
+  designation?: Designation | null
+  _count?: { candidates: number }
+}
+
+export type CandidateStage =
+  | 'APPLIED'
+  | 'SCREENING'
+  | 'INTERVIEW'
+  | 'SHORTLISTED'
+  | 'SELECTED'
+  | 'REJECTED'
+  | 'HIRED'
+
+export interface Candidate {
+  id: string
+  fullName: string
+  email: string
+  phone?: string | null
+  resumeUrl?: string | null
+  stage: CandidateStage
+  notes?: string | null
+  jobOpening?: { id: string; title: string }
+}
+
+export interface OnboardingTask {
+  id: string
+  title: string
+  isDone: boolean
+}
+
+export type PerformanceCycleStatus = 'ACTIVE' | 'CLOSED'
+
+export interface PerformanceCycle {
+  id: string
+  name: string
+  startDate: string
+  endDate: string
+  status: PerformanceCycleStatus
+}
+
+export type GoalStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED'
+
+export interface Goal {
+  id: string
+  title: string
+  description?: string | null
+  status: GoalStatus
+  employee?: EmployeeRef
+}
+
+export interface PerformanceReview {
+  id: string
+  selfRating?: number | null
+  selfFeedback?: string | null
+  managerRating?: number | null
+  managerFeedback?: string | null
+  finalRating?: number | null
+  employee?: EmployeeRef
+  manager?: { id: string; fullName: string } | null
+}
+
 export interface PayrollRunDetail extends PayrollRun {
   payslips: Payslip[]
 }

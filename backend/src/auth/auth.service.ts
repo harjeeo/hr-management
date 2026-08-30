@@ -62,6 +62,18 @@ export class AuthService {
           organizationId: org.id,
         },
       });
+
+      const freePlan = await tx.plan.upsert({
+        where: { name: 'Free' },
+        update: {},
+        create: { name: 'Free', price: 0, employeeLimit: 5, features: ['Basic employee management', 'Attendance', 'Leave'] },
+      });
+      const trialEndsAt = new Date();
+      trialEndsAt.setDate(trialEndsAt.getDate() + 14);
+      await tx.subscription.create({
+        data: { organizationId: org.id, planId: freePlan.id, status: 'TRIAL', trialEndsAt },
+      });
+
       return { org, user };
     });
 

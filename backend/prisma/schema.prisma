@@ -88,6 +88,50 @@ enum PayrollRunStatus {
   PAID
 }
 
+enum BillingCycle {
+  MONTHLY
+  YEARLY
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+enum JobStatus {
+  OPEN
+  CLOSED
+}
+
+enum CandidateStage {
+  APPLIED
+  SCREENING
+  INTERVIEW
+  SHORTLISTED
+  SELECTED
+  REJECTED
+  HIRED
+}
+
+enum PerformanceCycleStatus {
+  ACTIVE
+  CLOSED
+}
+
+enum GoalStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
 model Organization {
   id          String    @id @default(cuid())
   name        String
@@ -102,15 +146,19 @@ model Organization {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  users         User[]
-  branches      Branch[]
-  departments   Department[]
-  designations  Designation[]
-  employees     Employee[]
-  leaveTypes    LeaveType[]
-  holidays      Holiday[]
-  notifications Notification[]
-  payrollRuns   PayrollRun[]
+  users             User[]
+  branches          Branch[]
+  departments       Department[]
+  designations      Designation[]
+  employees         Employee[]
+  leaveTypes        LeaveType[]
+  holidays          Holiday[]
+  notifications     Notification[]
+  payrollRuns       PayrollRun[]
+  subscription      Subscription?
+  jobOpenings       JobOpening[]
+  candidates        Candidate[]
+  performanceCycles PerformanceCycle[]
 }
 
 model User {
@@ -150,6 +198,7 @@ model Department {
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   employees      Employee[]
+  jobOpenings    JobOpening[]
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
@@ -163,6 +212,7 @@ model Designation {
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   employees      Employee[]
+  jobOpenings    JobOpening[]
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
@@ -212,6 +262,10 @@ model Employee {
   documents       Document[]
   salaryStructure SalaryStructure?
   payslips        Payslip[]
+  onboardingTasks OnboardingTask[]
+  goals           Goal[]                 @relation("GoalEmployee")
+  reviews         PerformanceReview[]    @relation("ReviewEmployee")
+  reviewsGiven    PerformanceReview[]    @relation("ReviewManager")
 
   @@unique([organizationId, employeeCode])
   @@index([organizationId])
@@ -419,4 +473,147 @@ model Notification {
   createdAt      DateTime     @default(now())
 
   @@index([userId, isRead])
+}
+
+model Plan {
+  id            String       @id @default(cuid())
+  name          String       @unique
+  price         Float
+  billingCycle  BillingCycle @default(MONTHLY)
+  employeeLimit Int
+  features      String[]     @default([])
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id               String             @id @default(cuid())
+  organizationId   String             @unique
+  organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  planId           String
+  plan             Plan               @relation(fields: [planId], references: [id])
+  status           SubscriptionStatus @default(TRIAL)
+  trialEndsAt      DateTime?
+  currentPeriodEnd DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  invoices Invoice[]
+}
+
+model Invoice {
+  id             String        @id @default(cuid())
+  subscriptionId String
+  subscription   Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  amount         Float
+  status         InvoiceStatus @default(PENDING)
+  issuedAt       DateTime      @default(now())
+  paidAt         DateTime?
+
+  @@index([subscriptionId])
+}
+
+model JobOpening {
+  id             String         @id @default(cuid())
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  title          String
+  departmentId   String?
+  department     Department?    @relation(fields: [departmentId], references: [id])
+  designationId  String?
+  designation    Designation?   @relation(fields: [designationId], references: [id])
+  location       String?
+  employmentType EmploymentType @default(FULL_TIME)
+  salaryMin      Float?
+  salaryMax      Float?
+  description    String?
+  status         JobStatus      @default(OPEN)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  candidates Candidate[]
+
+  @@index([organizationId])
+}
+
+model Candidate {
+  id             String         @id @default(cuid())
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  jobOpeningId   String
+  jobOpening     JobOpening     @relation(fields: [jobOpeningId], references: [id], onDelete: Cascade)
+  fullName       String
+  email          String
+  phone          String?
+  resumeUrl      String?
+  stage          CandidateStage @default(APPLIED)
+  notes          String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([organizationId, jobOpeningId])
+}
+
+model OnboardingTask {
+  id         String   @id @default(cuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  title      String
+  isDone     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([employeeId])
+}
+
+model PerformanceCycle {
+  id             String                 @id @default(cuid())
+  organizationId String
+  organization   Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  startDate      DateTime               @db.Date
+  endDate        DateTime               @db.Date
+  status         PerformanceCycleStatus @default(ACTIVE)
+  createdAt      DateTime               @default(now())
+
+  goals   Goal[]
+  reviews PerformanceReview[]
+
+  @@index([organizationId])
+}
+
+model Goal {
+  id          String           @id @default(cuid())
+  cycleId     String
+  cycle       PerformanceCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  employeeId  String
+  employee    Employee         @relation("GoalEmployee", fields: [employeeId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  status      GoalStatus       @default(NOT_STARTED)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([cycleId, employeeId])
+}
+
+model PerformanceReview {
+  id              String           @id @default(cuid())
+  cycleId         String
+  cycle           PerformanceCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  employeeId      String
+  employee        Employee         @relation("ReviewEmployee", fields: [employeeId], references: [id], onDelete: Cascade)
+  managerId       String?
+  manager         Employee?        @relation("ReviewManager", fields: [managerId], references: [id])
+  selfRating      Int?
+  managerRating   Int?
+  selfFeedback    String?
+  managerFeedback String?
+  finalRating     Int?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@unique([cycleId, employeeId])
 }

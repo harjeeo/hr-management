@@ -15,22 +15,34 @@ import DocumentsPage from './pages/Documents'
 import PayrollPage from './pages/Payroll'
 import PayslipDetailPage from './pages/PayslipDetail'
 import ReportsPage from './pages/Reports'
+import RecruitmentPage from './pages/Recruitment'
+import OnboardingPage from './pages/Onboarding'
+import PerformancePage from './pages/Performance'
+import SubscriptionPage from './pages/Subscription'
 import SuperAdminOrganizationsPage from './pages/SuperAdminOrganizations'
+import SuperAdminBillingPage from './pages/SuperAdminBilling'
 import PlaceholderPage from './pages/Placeholder'
 import { useAuth } from './context/AuthContext'
 
 const comingSoon = [
-  { path: '/recruitment', label: 'Recruitment' },
   { path: '/announcements', label: 'Announcements' },
   { path: '/settings', label: 'Settings' },
 ]
 
 function AppShell() {
+  const { user } = useAuth()
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN'
+
   return (
     <div className="flex min-h-screen bg-white">
       <Sidebar />
       <Routes>
-        <Route path="/" element={<DashboardPage />} />
+        <Route
+          path="/"
+          element={
+            isSuperAdmin ? <Navigate to="/super-admin/organizations" replace /> : <DashboardPage />
+          }
+        />
         <Route path="/employees" element={<EmployeesPage />} />
         <Route path="/branches" element={<BranchesPage />} />
         <Route path="/departments" element={<DepartmentsPage />} />
@@ -42,7 +54,12 @@ function AppShell() {
         <Route path="/payroll" element={<PayrollPage />} />
         <Route path="/payroll/payslips/:id" element={<PayslipDetailPage />} />
         <Route path="/reports" element={<ReportsPage />} />
+        <Route path="/recruitment" element={<RecruitmentPage />} />
+        <Route path="/onboarding" element={<OnboardingPage />} />
+        <Route path="/performance" element={<PerformancePage />} />
+        <Route path="/subscription" element={<SubscriptionPage />} />
         <Route path="/super-admin/organizations" element={<SuperAdminOrganizationsPage />} />
+        <Route path="/super-admin/billing" element={<SuperAdminBillingPage />} />
         {comingSoon.map((item) => (
           <Route key={item.path} path={item.path} element={<PlaceholderPage title={item.label} />} />
         ))}

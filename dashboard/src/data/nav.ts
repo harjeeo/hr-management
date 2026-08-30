@@ -16,15 +16,19 @@ export const menuItems: NavItem[] = [
   { label: 'Holidays', path: '/holidays', icon: 'activities' },
   { label: 'Payroll', path: '/payroll', icon: 'deals' },
   { label: 'Recruitment', path: '/recruitment', icon: 'leads' },
+  { label: 'Onboarding', path: '/onboarding', icon: 'userCheck' },
+  { label: 'Performance', path: '/performance', icon: 'shield' },
   { label: 'Documents', path: '/documents', icon: 'inbox' },
 ]
 
 export const insightItems: NavItem[] = [
   { label: 'Reports', path: '/reports', icon: 'reports' },
   { label: 'Announcements', path: '/announcements', icon: 'activities' },
+  { label: 'Subscription', path: '/subscription', icon: 'deals' },
   { label: 'Settings', path: '/settings', icon: 'tasks' },
 ]
 
 export const superAdminItems: NavItem[] = [
   { label: 'Organizations', path: '/super-admin/organizations', icon: 'marketplace' },
+  { label: 'Plans & Billing', path: '/super-admin/billing', icon: 'deals' },
 ]

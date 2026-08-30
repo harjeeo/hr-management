@@ -15,6 +15,10 @@ import { HolidaysModule } from './holidays/holidays.module';
 import { DocumentsModule } from './documents/documents.module';
 import { PayrollModule } from './payroll/payroll.module';
 import { ReportsModule } from './reports/reports.module';
+import { BillingModule } from './billing/billing.module';
+import { RecruitmentModule } from './recruitment/recruitment.module';
+import { OnboardingModule } from './onboarding/onboarding.module';
+import { PerformanceModule } from './performance/performance.module';
 
 @Module({
   imports: [
@@ -34,6 +38,10 @@ import { ReportsModule } from './reports/reports.module';
     DocumentsModule,
     PayrollModule,
     ReportsModule,
+    BillingModule,
+    RecruitmentModule,
+    OnboardingModule,
+    PerformanceModule,
   ],
 })
 export class AppModule {}
