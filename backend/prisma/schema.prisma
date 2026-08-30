@@ -82,6 +82,12 @@ enum DocumentCategory {
   OTHER
 }
 
+enum PayrollRunStatus {
+  DRAFT
+  PROCESSED
+  PAID
+}
+
 model Organization {
   id          String    @id @default(cuid())
   name        String
@@ -104,6 +110,7 @@ model Organization {
   leaveTypes    LeaveType[]
   holidays      Holiday[]
   notifications Notification[]
+  payrollRuns   PayrollRun[]
 }
 
 model User {
@@ -198,14 +205,83 @@ model Employee {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  attendances   Attendance[]
-  corrections   AttendanceCorrection[] @relation("CorrectionEmployee")
-  leaveBalances LeaveBalance[]
-  leaveRequests LeaveRequest[]         @relation("LeaveRequestEmployee")
-  documents     Document[]
+  attendances     Attendance[]
+  corrections     AttendanceCorrection[] @relation("CorrectionEmployee")
+  leaveBalances   LeaveBalance[]
+  leaveRequests   LeaveRequest[]         @relation("LeaveRequestEmployee")
+  documents       Document[]
+  salaryStructure SalaryStructure?
+  payslips        Payslip[]
 
   @@unique([organizationId, employeeCode])
   @@index([organizationId])
+}
+
+model SalaryStructure {
+  id             String   @id @default(cuid())
+  organizationId String
+  employeeId     String   @unique
+  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  basic            Float @default(0)
+  hra              Float @default(0)
+  conveyance       Float @default(0)
+  specialAllowance Float @default(0)
+  otherAllowance   Float @default(0)
+
+  providentFund   Float @default(0)
+  professionalTax Float @default(0)
+  otherDeductions Float @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+}
+
+model PayrollRun {
+  id             String           @id @default(cuid())
+  organizationId String
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  month          Int
+  year           Int
+  status         PayrollRunStatus @default(DRAFT)
+  processedAt    DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  payslips Payslip[]
+
+  @@unique([organizationId, month, year])
+  @@index([organizationId])
+}
+
+model Payslip {
+  id             String     @id @default(cuid())
+  organizationId String
+  payrollRunId   String
+  payrollRun     PayrollRun @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
+  employeeId     String
+  employee       Employee   @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  basic            Float
+  hra              Float
+  conveyance       Float
+  specialAllowance Float
+  otherAllowance   Float
+  grossSalary      Float
+
+  providentFund   Float
+  professionalTax Float
+  otherDeductions Float
+  totalDeductions Float
+
+  netSalary Float
+
+  createdAt DateTime @default(now())
+
+  @@unique([payrollRunId, employeeId])
+  @@index([organizationId, employeeId])
 }
 
 model Attendance {

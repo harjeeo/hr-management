@@ -12,14 +12,15 @@ import AttendancePage from './pages/Attendance'
 import LeavePage from './pages/Leave'
 import HolidaysPage from './pages/Holidays'
 import DocumentsPage from './pages/Documents'
+import PayrollPage from './pages/Payroll'
+import PayslipDetailPage from './pages/PayslipDetail'
+import ReportsPage from './pages/Reports'
 import SuperAdminOrganizationsPage from './pages/SuperAdminOrganizations'
 import PlaceholderPage from './pages/Placeholder'
 import { useAuth } from './context/AuthContext'
 
 const comingSoon = [
-  { path: '/payroll', label: 'Payroll' },
   { path: '/recruitment', label: 'Recruitment' },
-  { path: '/reports', label: 'Reports' },
   { path: '/announcements', label: 'Announcements' },
   { path: '/settings', label: 'Settings' },
 ]
@@ -38,6 +39,9 @@ function AppShell() {
         <Route path="/leave" element={<LeavePage />} />
         <Route path="/holidays" element={<HolidaysPage />} />
         <Route path="/documents" element={<DocumentsPage />} />
+        <Route path="/payroll" element={<PayrollPage />} />
+        <Route path="/payroll/payslips/:id" element={<PayslipDetailPage />} />
+        <Route path="/reports" element={<ReportsPage />} />
         <Route path="/super-admin/organizations" element={<SuperAdminOrganizationsPage />} />
         {comingSoon.map((item) => (
           <Route key={item.path} path={item.path} element={<PlaceholderPage title={item.label} />} />

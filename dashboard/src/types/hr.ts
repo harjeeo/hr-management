@@ -157,3 +157,47 @@ export interface AppNotification {
   isRead: boolean
   createdAt: string
 }
+
+export interface SalaryStructure {
+  id?: string
+  basic: number
+  hra: number
+  conveyance: number
+  specialAllowance: number
+  otherAllowance: number
+  providentFund: number
+  professionalTax: number
+  otherDeductions: number
+}
+
+export type PayrollRunStatus = 'DRAFT' | 'PROCESSED' | 'PAID'
+
+export interface PayrollRun {
+  id: string
+  month: number
+  year: number
+  status: PayrollRunStatus
+  processedAt?: string | null
+}
+
+export interface Payslip {
+  id: string
+  basic: number
+  hra: number
+  conveyance: number
+  specialAllowance: number
+  otherAllowance: number
+  grossSalary: number
+  providentFund: number
+  professionalTax: number
+  otherDeductions: number
+  totalDeductions: number
+  netSalary: number
+  createdAt: string
+  employee?: EmployeeRef
+  payrollRun?: { month: number; year: number; status: PayrollRunStatus }
+}
+
+export interface PayrollRunDetail extends PayrollRun {
+  payslips: Payslip[]
+}
