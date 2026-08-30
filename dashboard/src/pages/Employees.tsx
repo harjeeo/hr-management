@@ -126,15 +126,15 @@ export default function EmployeesPage() {
       <div className="flex-1 min-w-0">
         <Header title="Employees" />
         <div className="px-8 pb-8">
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-4">
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search employees…"
               className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
             />
+            <EmployeesToolbar onExport={handleExport} onAddNew={openCreate} />
           </div>
-          <EmployeesToolbar onExport={handleExport} onAddNew={openCreate} />
 
           <div className="border border-gray-100 rounded-xl">
             {loading ? (
