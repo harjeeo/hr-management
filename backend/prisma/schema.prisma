@@ -159,6 +159,8 @@ model Organization {
   jobOpenings       JobOpening[]
   candidates        Candidate[]
   performanceCycles PerformanceCycle[]
+  auditLogs         AuditLog[]
+  apiKeys           ApiKey[]
 }
 
 model User {
@@ -172,8 +174,13 @@ model User {
   organization   Organization?  @relation(fields: [organizationId], references: [id])
   employee       Employee?
   notifications  Notification[]
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  auditLogs      AuditLog[]
+
+  twoFactorSecret  String?
+  twoFactorEnabled Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([organizationId])
 }
@@ -345,7 +352,11 @@ model Attendance {
   employee       Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   date           DateTime         @db.Date
   checkIn        DateTime?
+  checkInLat     Float?
+  checkInLng     Float?
   checkOut       DateTime?
+  checkOutLat    Float?
+  checkOutLng    Float?
   status         AttendanceStatus @default(PRESENT)
   notes          String?
   createdAt      DateTime         @default(now())
@@ -616,4 +627,36 @@ model PerformanceReview {
   updatedAt       DateTime         @updatedAt
 
   @@unique([cycleId, employeeId])
+}
+
+model AuditLog {
+  id             String        @id @default(cuid())
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String?
+  user           User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action         String
+  entityType     String?
+  entityId       String?
+  description    String
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime      @default(now())
+
+  @@index([organizationId, createdAt])
+  @@index([userId])
+}
+
+model ApiKey {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  keyPrefix      String
+  keyHash        String
+  lastUsedAt     DateTime?
+  revokedAt      DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId])
 }

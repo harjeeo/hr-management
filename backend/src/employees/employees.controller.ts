@@ -36,13 +36,13 @@ export class EmployeesController {
   @Put(':id')
   @Roles('ORG_ADMIN', 'HR_MANAGER')
   update(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateEmployeeDto) {
-    return this.service.update(user.organizationId!, id, dto);
+    return this.service.update(user.organizationId!, id, dto, user.userId);
   }
 
   @Delete(':id')
   @Roles('ORG_ADMIN', 'HR_MANAGER')
   remove(@CurrentUser() user: AuthUser, @Param('id') id: string) {
-    return this.service.remove(user.organizationId!, id);
+    return this.service.remove(user.organizationId!, id, user.userId);
   }
 
   @Post(':id/create-login')

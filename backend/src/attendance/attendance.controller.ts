@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { AttendanceService } from './attendance.service';
-import { RequestCorrectionDto, ReviewCorrectionDto } from './dto/attendance.dto';
+import { CheckInOutDto, RequestCorrectionDto, ReviewCorrectionDto } from './dto/attendance.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -13,13 +13,13 @@ export class AttendanceController {
   constructor(private service: AttendanceService) {}
 
   @Post('check-in')
-  checkIn(@CurrentUser() user: AuthUser) {
-    return this.service.checkIn(user.userId);
+  checkIn(@CurrentUser() user: AuthUser, @Body() dto: CheckInOutDto) {
+    return this.service.checkIn(user.userId, dto);
   }
 
   @Post('check-out')
-  checkOut(@CurrentUser() user: AuthUser) {
-    return this.service.checkOut(user.userId);
+  checkOut(@CurrentUser() user: AuthUser, @Body() dto: CheckInOutDto) {
+    return this.service.checkOut(user.userId, dto);
   }
 
   @Get('me/today')

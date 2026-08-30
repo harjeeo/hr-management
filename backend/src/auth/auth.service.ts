@@ -1,10 +1,13 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
+import { authenticator } from 'otplib';
+import * as QRCode from 'qrcode';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterOrgDto } from './dto/register-org.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthUser } from '../common/types/auth-user';
+import { AuditService } from '../audit/audit.service';
 
 function slugify(name: string): string {
   return (
@@ -16,11 +19,17 @@ function slugify(name: string): string {
   );
 }
 
+interface RequestMeta {
+  ipAddress?: string;
+  userAgent?: string;
+}
+
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwt: JwtService,
+    private audit: AuditService,
   ) {}
 
   private async signFor(user: { id: string; email: string; role: string; organizationId: string | null }) {
@@ -80,12 +89,31 @@ export class AuthService {
     return this.signFor(result.user);
   }
 
-  async login(dto: LoginDto) {
+  async login(dto: LoginDto, meta: RequestMeta = {}) {
     const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (!user || !user.isActive) throw new UnauthorizedException('Invalid credentials');
 
     const valid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!valid) throw new UnauthorizedException('Invalid credentials');
+
+    if (user.twoFactorEnabled) {
+      if (!dto.totpCode) {
+        return { requires2FA: true };
+      }
+      const validCode = authenticator.check(dto.totpCode, user.twoFactorSecret!);
+      if (!validCode) throw new UnauthorizedException('Invalid 2FA code');
+    }
+
+    await this.audit.log({
+      organizationId: user.organizationId,
+      userId: user.id,
+      action: 'LOGIN',
+      entityType: 'User',
+      entityId: user.id,
+      description: `${user.email} logged in`,
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+    });
 
     return this.signFor(user);
   }
@@ -93,9 +121,57 @@ export class AuthService {
   async me(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true, name: true, role: true, organizationId: true, organization: true },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        organizationId: true,
+        organization: true,
+        twoFactorEnabled: true,
+      },
     });
     if (!user) throw new UnauthorizedException();
     return user;
+  }
+
+  async setupTwoFactor(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException();
+
+    const secret = authenticator.generateSecret();
+    await this.prisma.user.update({ where: { id: userId }, data: { twoFactorSecret: secret } });
+
+    const otpauth = authenticator.keyuri(user.email, 'HR Management', secret);
+    const qrCodeDataUrl = await QRCode.toDataURL(otpauth);
+
+    return { secret, qrCodeDataUrl };
+  }
+
+  async enableTwoFactor(userId: string, code: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user?.twoFactorSecret) throw new BadRequestException('Run 2FA setup first');
+
+    const valid = authenticator.check(code, user.twoFactorSecret);
+    if (!valid) throw new BadRequestException('Invalid code');
+
+    await this.prisma.user.update({ where: { id: userId }, data: { twoFactorEnabled: true } });
+    return { success: true };
+  }
+
+  async disableTwoFactor(userId: string, code: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user?.twoFactorEnabled || !user.twoFactorSecret) {
+      throw new BadRequestException('2FA is not enabled');
+    }
+
+    const valid = authenticator.check(code, user.twoFactorSecret);
+    if (!valid) throw new BadRequestException('Invalid code');
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { twoFactorEnabled: false, twoFactorSecret: null },
+    });
+    return { success: true };
   }
 }

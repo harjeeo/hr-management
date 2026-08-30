@@ -2,6 +2,7 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateEmployeeDto, UpdateEmployeeDto } from './dto/employee.dto';
+import { AuditService } from '../audit/audit.service';
 
 function generateTempPassword(): string {
   return Math.random().toString(36).slice(-6) + Math.random().toString(36).slice(-4).toUpperCase();
@@ -16,7 +17,10 @@ const includeRelations = {
 
 @Injectable()
 export class EmployeesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private audit: AuditService,
+  ) {}
 
   list(organizationId: string, search?: string) {
     return this.prisma.employee.findMany({
@@ -64,10 +68,10 @@ export class EmployeesService {
     });
   }
 
-  async update(organizationId: string, id: string, dto: UpdateEmployeeDto) {
-    await this.findOne(organizationId, id);
+  async update(organizationId: string, id: string, dto: UpdateEmployeeDto, actorUserId?: string) {
+    const before = await this.findOne(organizationId, id);
     const { dateOfBirth, joiningDate, ...rest } = dto;
-    return this.prisma.employee.update({
+    const updated = await this.prisma.employee.update({
       where: { id },
       data: {
         ...rest,
@@ -76,11 +80,32 @@ export class EmployeesService {
       },
       include: includeRelations,
     });
+
+    if (dto.employmentStatus && dto.employmentStatus !== before.employmentStatus) {
+      await this.audit.log({
+        organizationId,
+        userId: actorUserId,
+        action: 'EMPLOYEE_STATUS_CHANGED',
+        entityType: 'Employee',
+        entityId: id,
+        description: `${before.fullName}'s status changed from ${before.employmentStatus} to ${dto.employmentStatus}`,
+      });
+    }
+
+    return updated;
   }
 
-  async remove(organizationId: string, id: string) {
-    await this.findOne(organizationId, id);
+  async remove(organizationId: string, id: string, actorUserId?: string) {
+    const employee = await this.findOne(organizationId, id);
     await this.prisma.employee.delete({ where: { id } });
+    await this.audit.log({
+      organizationId,
+      userId: actorUserId,
+      action: 'EMPLOYEE_DELETED',
+      entityType: 'Employee',
+      entityId: id,
+      description: `${employee.fullName} (${employee.employeeCode}) was removed`,
+    });
     return { success: true };
   }
 

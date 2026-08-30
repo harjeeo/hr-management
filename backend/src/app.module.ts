@@ -19,6 +19,8 @@ import { BillingModule } from './billing/billing.module';
 import { RecruitmentModule } from './recruitment/recruitment.module';
 import { OnboardingModule } from './onboarding/onboarding.module';
 import { PerformanceModule } from './performance/performance.module';
+import { AuditModule } from './audit/audit.module';
+import { ApiKeysModule } from './api-keys/api-keys.module';
 
 @Module({
   imports: [
@@ -42,6 +44,8 @@ import { PerformanceModule } from './performance/performance.module';
     RecruitmentModule,
     OnboardingModule,
     PerformanceModule,
+    AuditModule,
+    ApiKeysModule,
   ],
 })
 export class AppModule {}

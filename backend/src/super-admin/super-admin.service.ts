@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { OrgStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class SuperAdminService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private audit: AuditService,
+  ) {}
 
   async listOrganizations() {
     const orgs = await this.prisma.organization.findMany({
@@ -14,10 +18,21 @@ export class SuperAdminService {
     return orgs;
   }
 
-  async setStatus(orgId: string, status: OrgStatus) {
+  async setStatus(orgId: string, status: OrgStatus, actorUserId?: string) {
     const org = await this.prisma.organization.findUnique({ where: { id: orgId } });
     if (!org) throw new NotFoundException('Organization not found');
-    return this.prisma.organization.update({ where: { id: orgId }, data: { status } });
+    const updated = await this.prisma.organization.update({ where: { id: orgId }, data: { status } });
+
+    await this.audit.log({
+      organizationId: orgId,
+      userId: actorUserId,
+      action: 'ORG_STATUS_CHANGED',
+      entityType: 'Organization',
+      entityId: orgId,
+      description: `${org.name}'s status changed from ${org.status} to ${status} by platform admin`,
+    });
+
+    return updated;
   }
 
   async platformStats() {

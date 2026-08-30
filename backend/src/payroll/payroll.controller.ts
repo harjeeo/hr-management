@@ -26,7 +26,7 @@ export class PayrollController {
     @Param('employeeId') employeeId: string,
     @Body() dto: UpsertSalaryStructureDto,
   ) {
-    return this.service.upsertSalaryStructure(user.organizationId!, employeeId, dto);
+    return this.service.upsertSalaryStructure(user.organizationId!, employeeId, dto, user.userId);
   }
 
   @Get('runs')
@@ -44,7 +44,7 @@ export class PayrollController {
   @Post('runs')
   @Roles('ORG_ADMIN', 'HR_MANAGER')
   process(@CurrentUser() user: AuthUser, @Body() dto: ProcessPayrollDto) {
-    return this.service.process(user.organizationId!, dto);
+    return this.service.process(user.organizationId!, dto, user.userId);
   }
 
   @Get('payslips/me')

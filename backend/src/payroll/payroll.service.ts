@@ -9,12 +9,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import { UpsertSalaryStructureDto } from './dto/salary-structure.dto';
 import { ProcessPayrollDto } from './dto/payroll-run.dto';
 import { NotificationsService } from '../notifications/notifications.service';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class PayrollService {
   constructor(
     private prisma: PrismaService,
     private notifications: NotificationsService,
+    private audit: AuditService,
   ) {}
 
   // Salary structures
@@ -24,15 +26,31 @@ export class PayrollService {
     return this.prisma.salaryStructure.findUnique({ where: { employeeId } });
   }
 
-  async upsertSalaryStructure(organizationId: string, employeeId: string, dto: UpsertSalaryStructureDto) {
+  async upsertSalaryStructure(
+    organizationId: string,
+    employeeId: string,
+    dto: UpsertSalaryStructureDto,
+    actorUserId?: string,
+  ) {
     const employee = await this.prisma.employee.findFirst({ where: { id: employeeId, organizationId } });
     if (!employee) throw new NotFoundException('Employee not found');
 
-    return this.prisma.salaryStructure.upsert({
+    const result = await this.prisma.salaryStructure.upsert({
       where: { employeeId },
       create: { organizationId, employeeId, ...dto },
       update: { ...dto },
     });
+
+    await this.audit.log({
+      organizationId,
+      userId: actorUserId,
+      action: 'SALARY_STRUCTURE_CHANGED',
+      entityType: 'Employee',
+      entityId: employeeId,
+      description: `${employee.fullName}'s salary structure was updated`,
+    });
+
+    return result;
   }
 
   // Payroll runs
@@ -57,7 +75,7 @@ export class PayrollService {
     return run;
   }
 
-  async process(organizationId: string, dto: ProcessPayrollDto) {
+  async process(organizationId: string, dto: ProcessPayrollDto, actorUserId?: string) {
     const existing = await this.prisma.payrollRun.findUnique({
       where: { organizationId_month_year: { organizationId, month: dto.month, year: dto.year } },
     });
@@ -118,7 +136,6 @@ export class PayrollService {
     return this.runDetail(organizationId, run.id);
   }
 
-  // Payslips
   async myPayslips(userId: string) {
     const employee = await this.prisma.employee.findFirst({ where: { userId } });
     if (!employee) throw new BadRequestException('No employee profile linked to this account');

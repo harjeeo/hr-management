@@ -5,7 +5,7 @@ import type { AuthUser } from '../types/hr'
 interface AuthContextValue {
   user: AuthUser | null
   loading: boolean
-  login: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string, totpCode?: string) => Promise<{ requires2FA?: boolean }>
   registerOrg: (companyName: string, ownerName: string, email: string, password: string) => Promise<void>
   logout: () => void
 }
@@ -13,8 +13,9 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 interface LoginResponse {
-  accessToken: string
-  user: AuthUser
+  accessToken?: string
+  user?: AuthUser
+  requires2FA?: boolean
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -33,10 +34,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false))
   }, [])
 
-  async function login(email: string, password: string) {
-    const res = await api.post<LoginResponse>('/auth/login', { email, password })
-    setToken(res.accessToken)
-    setUser(res.user)
+  async function login(email: string, password: string, totpCode?: string) {
+    const res = await api.post<LoginResponse>('/auth/login', { email, password, totpCode })
+    if (res.requires2FA) return { requires2FA: true }
+    setToken(res.accessToken!)
+    setUser(res.user!)
+    return {}
   }
 
   async function registerOrg(companyName: string, ownerName: string, email: string, password: string) {
@@ -46,8 +49,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       password,
     })
-    setToken(res.accessToken)
-    setUser(res.user)
+    setToken(res.accessToken!)
+    setUser(res.user!)
   }
 
   function logout() {

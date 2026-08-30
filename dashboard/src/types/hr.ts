@@ -71,7 +71,11 @@ export interface Attendance {
   id: string
   date: string
   checkIn?: string | null
+  checkInLat?: number | null
+  checkInLng?: number | null
   checkOut?: string | null
+  checkOutLat?: number | null
+  checkOutLng?: number | null
   status: AttendanceStatus
   notes?: string | null
   employee?: EmployeeRef
@@ -305,4 +309,30 @@ export interface PerformanceReview {
 
 export interface PayrollRunDetail extends PayrollRun {
   payslips: Payslip[]
+}
+
+export interface AuditLogEntry {
+  id: string
+  action: string
+  description: string
+  ipAddress?: string | null
+  userAgent?: string | null
+  createdAt: string
+  user?: { id: string; name: string; email: string } | null
+}
+
+export interface ApiKeySummary {
+  id: string
+  name: string
+  keyPrefix: string
+  lastUsedAt?: string | null
+  revokedAt?: string | null
+  createdAt: string
+}
+
+export interface ApiKeyCreated {
+  id: string
+  name: string
+  key: string
+  keyPrefix: string
 }

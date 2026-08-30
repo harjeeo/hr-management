@@ -12,6 +12,20 @@ function fmtTime(iso?: string | null) {
 
 const isAdmin = (role?: string) => role === 'ORG_ADMIN' || role === 'HR_MANAGER' || role === 'MANAGER'
 
+function getLocation(): Promise<{ lat?: number; lng?: number }> {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) {
+      resolve({})
+      return
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => resolve({}),
+      { timeout: 5000 },
+    )
+  })
+}
+
 export default function AttendancePage() {
   const { user } = useAuth()
   const [today, setToday] = useState<Attendance | null>(null)
@@ -44,7 +58,8 @@ export default function AttendancePage() {
     setBusy(true)
     setError(null)
     try {
-      await api.post('/attendance/check-in')
+      const loc = await getLocation()
+      await api.post('/attendance/check-in', loc)
       loadSelf()
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to check in')
@@ -57,7 +72,8 @@ export default function AttendancePage() {
     setBusy(true)
     setError(null)
     try {
-      await api.post('/attendance/check-out')
+      const loc = await getLocation()
+      await api.post('/attendance/check-out', loc)
       loadSelf()
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to check out')
@@ -184,6 +200,16 @@ export default function AttendancePage() {
                     <div className="flex items-center gap-6 text-xs text-gray-500">
                       <span>In: {fmtTime(a.checkIn)}</span>
                       <span>Out: {fmtTime(a.checkOut)}</span>
+                      {a.checkInLat && a.checkInLng && (
+                        <a
+                          href={`https://www.google.com/maps?q=${a.checkInLat},${a.checkInLng}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-blue-600 hover:underline"
+                        >
+                          View location
+                        </a>
+                      )}
                       <span className="px-2 py-1 rounded-full bg-gray-100 text-gray-700">{a.status}</span>
                     </div>
                   </div>

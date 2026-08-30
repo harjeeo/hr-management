@@ -1,6 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { RequestCorrectionDto, ReviewCorrectionDto } from './dto/attendance.dto';
+import { CheckInOutDto, RequestCorrectionDto, ReviewCorrectionDto } from './dto/attendance.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 
 function startOfToday(): Date {
@@ -22,7 +22,7 @@ export class AttendanceService {
     return employee;
   }
 
-  async checkIn(userId: string) {
+  async checkIn(userId: string, dto: CheckInOutDto) {
     const employee = await this.myEmployee(userId);
     const date = startOfToday();
     const existing = await this.prisma.attendance.findUnique({
@@ -37,13 +37,15 @@ export class AttendanceService {
         employeeId: employee.id,
         date,
         checkIn: new Date(),
+        checkInLat: dto.lat,
+        checkInLng: dto.lng,
         status: 'PRESENT',
       },
-      update: { checkIn: new Date(), status: 'PRESENT' },
+      update: { checkIn: new Date(), checkInLat: dto.lat, checkInLng: dto.lng, status: 'PRESENT' },
     });
   }
 
-  async checkOut(userId: string) {
+  async checkOut(userId: string, dto: CheckInOutDto) {
     const employee = await this.myEmployee(userId);
     const date = startOfToday();
     const existing = await this.prisma.attendance.findUnique({
@@ -54,7 +56,7 @@ export class AttendanceService {
 
     return this.prisma.attendance.update({
       where: { id: existing.id },
-      data: { checkOut: new Date() },
+      data: { checkOut: new Date(), checkOutLat: dto.lat, checkOutLng: dto.lng },
     });
   }
 

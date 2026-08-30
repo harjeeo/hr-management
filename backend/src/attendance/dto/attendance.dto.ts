@@ -1,4 +1,14 @@
-import { IsDateString, IsIn, IsOptional, IsString } from 'class-validator';
+import { IsDateString, IsIn, IsLatitude, IsLongitude, IsOptional, IsString } from 'class-validator';
+
+export class CheckInOutDto {
+  @IsOptional()
+  @IsLatitude()
+  lat?: number;
+
+  @IsOptional()
+  @IsLongitude()
+  lng?: number;
+}
 
 export class RequestCorrectionDto {
   @IsDateString()

@@ -21,13 +21,11 @@ import PerformancePage from './pages/Performance'
 import SubscriptionPage from './pages/Subscription'
 import SuperAdminOrganizationsPage from './pages/SuperAdminOrganizations'
 import SuperAdminBillingPage from './pages/SuperAdminBilling'
+import SettingsPage from './pages/Settings'
 import PlaceholderPage from './pages/Placeholder'
 import { useAuth } from './context/AuthContext'
 
-const comingSoon = [
-  { path: '/announcements', label: 'Announcements' },
-  { path: '/settings', label: 'Settings' },
-]
+const comingSoon = [{ path: '/announcements', label: 'Announcements' }]
 
 function AppShell() {
   const { user } = useAuth()
@@ -58,6 +56,7 @@ function AppShell() {
         <Route path="/onboarding" element={<OnboardingPage />} />
         <Route path="/performance" element={<PerformancePage />} />
         <Route path="/subscription" element={<SubscriptionPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
         <Route path="/super-admin/organizations" element={<SuperAdminOrganizationsPage />} />
         <Route path="/super-admin/billing" element={<SuperAdminBillingPage />} />
         {comingSoon.map((item) => (
