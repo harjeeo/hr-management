@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ORG_ADMIN
+  HR_MANAGER
+  MANAGER
+  EMPLOYEE
+}
+
+enum OrgStatus {
+  TRIAL
+  ACTIVE
+  SUSPENDED
+}
+
+enum EmploymentStatus {
+  ACTIVE
+  ON_LEAVE
+  PROBATION
+  RESIGNED
+  TERMINATED
+  RETIRED
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERN
+}
+
+model Organization {
+  id            String        @id @default(cuid())
+  name          String
+  slug          String        @unique
+  logoUrl       String?
+  industry      String?
+  companySize   String?
+  timezone      String        @default("Asia/Kolkata")
+  currency      String        @default("INR")
+  workingDays   String[]      @default(["MON", "TUE", "WED", "THU", "FRI"])
+  status        OrgStatus     @default(TRIAL)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  users         User[]
+  branches      Branch[]
+  departments   Department[]
+  designations  Designation[]
+  employees     Employee[]
+}
+
+model User {
+  id             String       @id @default(cuid())
+  email          String       @unique
+  passwordHash   String
+  name           String
+  role           Role         @default(EMPLOYEE)
+  isActive       Boolean      @default(true)
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  employee       Employee?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+}
+
+model Branch {
+  id             String       @id @default(cuid())
+  name           String
+  address        String?
+  city           String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employees      Employee[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+}
+
+model Department {
+  id             String       @id @default(cuid())
+  name           String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employees      Employee[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+}
+
+model Designation {
+  id             String       @id @default(cuid())
+  title          String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employees      Employee[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([organizationId, title])
+  @@index([organizationId])
+}
+
+model Employee {
+  id               String            @id @default(cuid())
+  employeeCode     String
+  organizationId   String
+  organization     Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId           String?           @unique
+  user             User?             @relation(fields: [userId], references: [id])
+
+  fullName         String
+  email            String
+  phone            String?
+  dateOfBirth      DateTime?
+  gender           String?
+  address          String?
+  emergencyContact String?
+
+  branchId         String?
+  branch           Branch?           @relation(fields: [branchId], references: [id])
+  departmentId     String?
+  department       Department?       @relation(fields: [departmentId], references: [id])
+  designationId    String?
+  designation      Designation?      @relation(fields: [designationId], references: [id])
+
+  managerId        String?
+  manager          Employee?         @relation("EmployeeManager", fields: [managerId], references: [id])
+  reports          Employee[]        @relation("EmployeeManager")
+
+  joiningDate      DateTime?
+  employmentType   EmploymentType    @default(FULL_TIME)
+  employmentStatus EmploymentStatus  @default(ACTIVE)
+  workLocation     String?
+
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@unique([organizationId, employeeCode])
+  @@index([organizationId])
+}

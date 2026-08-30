@@ -7,19 +7,23 @@ export interface NavItem {
 
 export const menuItems: NavItem[] = [
   { label: 'Dashboard', path: '/', icon: 'dashboard' },
-  { label: 'Leads', path: '/leads', icon: 'leads' },
-  { label: 'Deals', path: '/deals', icon: 'deals', hasChildren: true },
-  { label: 'Projects', path: '/projects', icon: 'projects', hasChildren: true },
-  { label: 'Contacts', path: '/contacts', icon: 'contacts', hasChildren: true },
-  { label: 'Products', path: '/products', icon: 'products' },
-  { label: 'Marketplace', path: '/marketplace', icon: 'marketplace' },
+  { label: 'Employees', path: '/employees', icon: 'contacts' },
+  { label: 'Branches', path: '/branches', icon: 'marketplace' },
+  { label: 'Departments', path: '/departments', icon: 'projects' },
+  { label: 'Designations', path: '/designations', icon: 'tag' },
+  { label: 'Attendance', path: '/attendance', icon: 'clock' },
+  { label: 'Leave', path: '/leave', icon: 'calendar' },
+  { label: 'Payroll', path: '/payroll', icon: 'deals' },
+  { label: 'Recruitment', path: '/recruitment', icon: 'leads' },
+  { label: 'Documents', path: '/documents', icon: 'inbox' },
 ]
 
 export const insightItems: NavItem[] = [
-  { label: 'Activities', path: '/activities', icon: 'activities' },
-  { label: 'Reports', path: '/reports', icon: 'reports', hasChildren: true },
-  { label: 'Campaigns', path: '/campaigns', icon: 'campaigns', hasChildren: true },
-  { label: 'Inbox', path: '/inbox', icon: 'inbox' },
-  { label: 'Tasks', path: '/tasks', icon: 'tasks' },
-  { label: 'Calendar', path: '/calendar', icon: 'calendar' },
+  { label: 'Reports', path: '/reports', icon: 'reports' },
+  { label: 'Announcements', path: '/announcements', icon: 'activities' },
+  { label: 'Settings', path: '/settings', icon: 'tasks' },
+]
+
+export const superAdminItems: NavItem[] = [
+  { label: 'Organizations', path: '/super-admin/organizations', icon: 'marketplace' },
 ]
