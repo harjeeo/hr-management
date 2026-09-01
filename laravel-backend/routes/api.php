@@ -11,6 +11,8 @@ use App\Http\Controllers\Api\HolidayController;
 use App\Http\Controllers\Api\LeaveController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OrganizationController;
+use App\Http\Controllers\Api\PayrollController;
+use App\Http\Controllers\Api\ReportsController;
 use App\Http\Controllers\Api\SuperAdminController;
 use Illuminate\Support\Facades\Route;
 
@@ -98,6 +100,22 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('notifications', [NotificationController::class, 'index']);
     Route::post('notifications/read-all', [NotificationController::class, 'markAllRead']);
     Route::post('notifications/{id}/read', [NotificationController::class, 'markRead']);
+
+    Route::get('payroll/payslips/me', [PayrollController::class, 'myPayslips']);
+    Route::get('payroll/payslips/{id}', [PayrollController::class, 'payslipDetail']);
+
+    Route::middleware('role:ORG_ADMIN,HR_MANAGER')->group(function () {
+        Route::get('payroll/salary-structures/{employeeId}', [PayrollController::class, 'getSalaryStructure']);
+        Route::put('payroll/salary-structures/{employeeId}', [PayrollController::class, 'upsertSalaryStructure']);
+        Route::get('payroll/runs', [PayrollController::class, 'listRuns']);
+        Route::get('payroll/runs/{id}', [PayrollController::class, 'runDetailAction']);
+        Route::post('payroll/runs', [PayrollController::class, 'process']);
+
+        Route::get('reports/employees', [ReportsController::class, 'employees']);
+        Route::get('reports/attendance', [ReportsController::class, 'attendance']);
+        Route::get('reports/leave', [ReportsController::class, 'leave']);
+        Route::get('reports/payroll', [ReportsController::class, 'payroll']);
+    });
 
     Route::middleware('role:SUPER_ADMIN')->prefix('super-admin')->group(function () {
         Route::get('organizations', [SuperAdminController::class, 'organizations']);
