@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BillingController;
 use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\DesignationController;
@@ -10,8 +11,11 @@ use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\HolidayController;
 use App\Http\Controllers\Api\LeaveController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\OnboardingController;
 use App\Http\Controllers\Api\OrganizationController;
 use App\Http\Controllers\Api\PayrollController;
+use App\Http\Controllers\Api\PerformanceController;
+use App\Http\Controllers\Api\RecruitmentController;
 use App\Http\Controllers\Api\ReportsController;
 use App\Http\Controllers\Api\SuperAdminController;
 use Illuminate\Support\Facades\Route;
@@ -117,9 +121,60 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('reports/payroll', [ReportsController::class, 'payroll']);
     });
 
+    Route::get('plans', [BillingController::class, 'listPlans']);
+    Route::get('subscriptions/me', [BillingController::class, 'mySubscription']);
+    Route::middleware('role:ORG_ADMIN')->post('subscriptions/me/change-plan', [BillingController::class, 'changePlan']);
+
+    Route::get('recruitment/jobs', [RecruitmentController::class, 'listJobs']);
+
+    Route::middleware('role:ORG_ADMIN,HR_MANAGER')->group(function () {
+        Route::post('recruitment/jobs', [RecruitmentController::class, 'createJob']);
+        Route::put('recruitment/jobs/{id}', [RecruitmentController::class, 'updateJob']);
+        Route::delete('recruitment/jobs/{id}', [RecruitmentController::class, 'removeJob']);
+
+        Route::get('recruitment/candidates', [RecruitmentController::class, 'listCandidates']);
+        Route::post('recruitment/candidates', [RecruitmentController::class, 'createCandidate']);
+        Route::put('recruitment/candidates/{id}', [RecruitmentController::class, 'updateCandidate']);
+        Route::delete('recruitment/candidates/{id}', [RecruitmentController::class, 'removeCandidate']);
+        Route::post('recruitment/candidates/{id}/resume', [RecruitmentController::class, 'uploadResume']);
+        Route::post('recruitment/candidates/{id}/hire', [RecruitmentController::class, 'hire']);
+    });
+
+    Route::middleware('role:ORG_ADMIN,HR_MANAGER')->prefix('onboarding')->group(function () {
+        Route::get('employees/{employeeId}', [OnboardingController::class, 'list']);
+        Route::post('employees/{employeeId}', [OnboardingController::class, 'addTask']);
+        Route::put('tasks/{id}', [OnboardingController::class, 'updateTask']);
+        Route::delete('tasks/{id}', [OnboardingController::class, 'removeTask']);
+    });
+
+    Route::get('performance/cycles', [PerformanceController::class, 'listCycles']);
+    Route::get('performance/cycles/{cycleId}/goals/me', [PerformanceController::class, 'myGoals']);
+    Route::put('performance/goals/{id}', [PerformanceController::class, 'updateGoal']);
+    Route::get('performance/cycles/{cycleId}/reviews/me', [PerformanceController::class, 'myReview']);
+    Route::post('performance/cycles/{cycleId}/reviews/self', [PerformanceController::class, 'submitSelfReview']);
+
+    Route::middleware('role:ORG_ADMIN,HR_MANAGER')->group(function () {
+        Route::post('performance/cycles', [PerformanceController::class, 'createCycle']);
+        Route::put('performance/cycles/{id}', [PerformanceController::class, 'updateCycle']);
+    });
+
+    Route::middleware('role:ORG_ADMIN,HR_MANAGER,MANAGER')->group(function () {
+        Route::get('performance/cycles/{cycleId}/goals', [PerformanceController::class, 'listGoals']);
+        Route::post('performance/cycles/{cycleId}/goals', [PerformanceController::class, 'createGoal']);
+        Route::get('performance/cycles/{cycleId}/reviews', [PerformanceController::class, 'listReviews']);
+        Route::post('performance/cycles/{cycleId}/reviews/{employeeId}/manager', [PerformanceController::class, 'submitManagerReview']);
+    });
+
     Route::middleware('role:SUPER_ADMIN')->prefix('super-admin')->group(function () {
         Route::get('organizations', [SuperAdminController::class, 'organizations']);
         Route::put('organizations/{id}/status', [SuperAdminController::class, 'setStatus']);
         Route::get('stats', [SuperAdminController::class, 'stats']);
+
+        Route::get('plans', [BillingController::class, 'listAllPlans']);
+        Route::post('plans', [BillingController::class, 'createPlan']);
+        Route::put('plans/{id}', [BillingController::class, 'updatePlan']);
+        Route::get('subscriptions', [BillingController::class, 'listSubscriptions']);
+        Route::post('invoices/{id}/mark-paid', [BillingController::class, 'markInvoicePaid']);
+        Route::get('billing-stats', [BillingController::class, 'billingStats']);
     });
 });

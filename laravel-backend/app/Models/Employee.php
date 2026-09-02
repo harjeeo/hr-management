@@ -114,4 +114,19 @@ class Employee extends Model
     {
         return $this->hasMany(Payslip::class);
     }
+
+    public function onboardingTasks(): HasMany
+    {
+        return $this->hasMany(OnboardingTask::class);
+    }
+
+    public function goals(): HasMany
+    {
+        return $this->hasMany(Goal::class);
+    }
+
+    public function performanceReviews(): HasMany
+    {
+        return $this->hasMany(PerformanceReview::class);
+    }
 }

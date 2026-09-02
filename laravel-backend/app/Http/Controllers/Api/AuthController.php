@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Models\Organization;
+use App\Models\Plan;
+use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -68,6 +70,22 @@ class AuthController extends Controller
                 'name' => $data['ownerName'],
                 'role' => 'ORG_ADMIN',
                 'organization_id' => $org->id,
+            ]);
+
+            $freePlan = Plan::firstOrCreate(
+                ['name' => 'Free'],
+                [
+                    'price' => 0,
+                    'employee_limit' => 5,
+                    'features' => ['Basic employee management', 'Attendance', 'Leave'],
+                ],
+            );
+
+            Subscription::create([
+                'organization_id' => $org->id,
+                'plan_id' => $freePlan->id,
+                'status' => 'TRIAL',
+                'trial_ends_at' => now()->addDays(14),
             ]);
 
             $token = $user->createToken('auth')->plainTextToken;
