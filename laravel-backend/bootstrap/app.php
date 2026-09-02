@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'role' => \App\Http\Middleware\EnsureRole::class,
+            'api-key' => \App\Http\Middleware\ApiKeyAuth::class,
         ]);
 
         $middleware->redirectGuestsTo(fn () => null);

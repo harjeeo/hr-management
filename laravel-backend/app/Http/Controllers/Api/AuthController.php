@@ -8,11 +8,15 @@ use App\Models\Organization;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Support\AuditLogger;
+use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\Writer\PngWriter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use PragmaRX\Google2FA\Google2FA;
 
 class AuthController extends Controller
 {
@@ -101,6 +105,7 @@ class AuthController extends Controller
         $data = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
+            'totpCode' => ['sometimes', 'nullable', 'string'],
         ]);
 
         $user = User::where('email', $data['email'])->first();
@@ -108,6 +113,28 @@ class AuthController extends Controller
         if (! $user || ! $user->is_active || ! Hash::check($data['password'], $user->password)) {
             throw ValidationException::withMessages(['email' => 'Invalid credentials'])->status(401);
         }
+
+        if ($user->two_factor_enabled) {
+            if (empty($data['totpCode'])) {
+                return response()->json(['requires2FA' => true]);
+            }
+
+            $valid = (new Google2FA)->verifyKey($user->two_factor_secret, $data['totpCode']);
+            if (! $valid) {
+                throw ValidationException::withMessages(['totpCode' => 'Invalid 2FA code'])->status(401);
+            }
+        }
+
+        AuditLogger::log([
+            'organizationId' => $user->organization_id,
+            'userId' => $user->id,
+            'action' => 'LOGIN',
+            'entityType' => 'User',
+            'entityId' => $user->id,
+            'description' => "{$user->email} logged in",
+            'ipAddress' => $request->ip(),
+            'userAgent' => $request->userAgent(),
+        ]);
 
         $token = $user->createToken('auth')->plainTextToken;
 
@@ -125,6 +152,57 @@ class AuthController extends Controller
             'role' => $user->role,
             'organizationId' => $user->organization_id,
             'organization' => $user->organization,
+            'twoFactorEnabled' => $user->two_factor_enabled,
         ]);
+    }
+
+    public function setupTwoFactor(Request $request)
+    {
+        $user = $request->user();
+
+        $google2fa = new Google2FA;
+        $secret = $google2fa->generateSecretKey();
+        $user->update(['two_factor_secret' => $secret]);
+
+        $otpauth = $google2fa->getQRCodeUrl('HR Management', $user->email, $secret);
+        $qrCodeDataUrl = (new Builder(writer: new PngWriter, data: $otpauth, size: 300, margin: 10))
+            ->build()
+            ->getDataUri();
+
+        return response()->json(['secret' => $secret, 'qrCodeDataUrl' => $qrCodeDataUrl]);
+    }
+
+    public function enableTwoFactor(Request $request)
+    {
+        $data = $request->validate(['code' => ['required', 'string', 'size:6']]);
+        $user = $request->user();
+
+        abort_if(! $user->two_factor_secret, 400, 'Run 2FA setup first');
+
+        $valid = (new Google2FA)->verifyKey($user->two_factor_secret, $data['code']);
+        if (! $valid) {
+            throw ValidationException::withMessages(['code' => 'Invalid code'])->status(400);
+        }
+
+        $user->update(['two_factor_enabled' => true]);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function disableTwoFactor(Request $request)
+    {
+        $data = $request->validate(['code' => ['required', 'string', 'size:6']]);
+        $user = $request->user();
+
+        abort_if(! $user->two_factor_enabled || ! $user->two_factor_secret, 400, '2FA is not enabled');
+
+        $valid = (new Google2FA)->verifyKey($user->two_factor_secret, $data['code']);
+        if (! $valid) {
+            throw ValidationException::withMessages(['code' => 'Invalid code'])->status(400);
+        }
+
+        $user->update(['two_factor_enabled' => false, 'two_factor_secret' => null]);
+
+        return response()->json(['success' => true]);
     }
 }

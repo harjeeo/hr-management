@@ -27,6 +27,11 @@ class AttendanceController extends Controller
         $employee = $this->myEmployee($request);
         $today = Carbon::today();
 
+        $data = $request->validate([
+            'lat' => ['sometimes', 'nullable', 'numeric', 'between:-90,90'],
+            'lng' => ['sometimes', 'nullable', 'numeric', 'between:-180,180'],
+        ]);
+
         $existing = Attendance::where('employee_id', $employee->id)->whereDate('date', $today)->first();
         if ($existing?->check_in) {
             throw ValidationException::withMessages(['checkIn' => 'Already checked in today'])->status(400);
@@ -34,7 +39,13 @@ class AttendanceController extends Controller
 
         $attendance = Attendance::updateOrCreate(
             ['employee_id' => $employee->id, 'date' => $today],
-            ['organization_id' => $employee->organization_id, 'check_in' => now(), 'status' => 'PRESENT'],
+            [
+                'organization_id' => $employee->organization_id,
+                'check_in' => now(),
+                'check_in_lat' => $data['lat'] ?? null,
+                'check_in_lng' => $data['lng'] ?? null,
+                'status' => 'PRESENT',
+            ],
         );
 
         return response()->json($attendance);
@@ -45,6 +56,11 @@ class AttendanceController extends Controller
         $employee = $this->myEmployee($request);
         $today = Carbon::today();
 
+        $data = $request->validate([
+            'lat' => ['sometimes', 'nullable', 'numeric', 'between:-90,90'],
+            'lng' => ['sometimes', 'nullable', 'numeric', 'between:-180,180'],
+        ]);
+
         $existing = Attendance::where('employee_id', $employee->id)->whereDate('date', $today)->first();
         if (! $existing?->check_in) {
             throw ValidationException::withMessages(['checkOut' => 'You have not checked in today'])->status(400);
@@ -53,7 +69,11 @@ class AttendanceController extends Controller
             throw ValidationException::withMessages(['checkOut' => 'Already checked out today'])->status(400);
         }
 
-        $existing->update(['check_out' => now()]);
+        $existing->update([
+            'check_out' => now(),
+            'check_out_lat' => $data['lat'] ?? null,
+            'check_out_lng' => $data['lng'] ?? null,
+        ]);
 
         return response()->json($existing);
     }

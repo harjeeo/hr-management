@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Api\ApiKeysController;
 use App\Http\Controllers\Api\AttendanceController;
+use App\Http\Controllers\Api\AuditController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BillingController;
 use App\Http\Controllers\Api\BranchController;
@@ -15,16 +17,34 @@ use App\Http\Controllers\Api\OnboardingController;
 use App\Http\Controllers\Api\OrganizationController;
 use App\Http\Controllers\Api\PayrollController;
 use App\Http\Controllers\Api\PerformanceController;
+use App\Http\Controllers\Api\PublicApiController;
 use App\Http\Controllers\Api\RecruitmentController;
 use App\Http\Controllers\Api\ReportsController;
 use App\Http\Controllers\Api\SuperAdminController;
 use Illuminate\Support\Facades\Route;
+
+Route::middleware('api-key')->prefix('public-api/v1')->group(function () {
+    Route::get('employees', [PublicApiController::class, 'listEmployees']);
+    Route::get('attendance/today', [PublicApiController::class, 'todayAttendance']);
+});
 
 Route::post('auth/register-organization', [AuthController::class, 'registerOrganization']);
 Route::post('auth/login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('auth/me', [AuthController::class, 'me']);
+    Route::post('auth/2fa/setup', [AuthController::class, 'setupTwoFactor']);
+    Route::post('auth/2fa/enable', [AuthController::class, 'enableTwoFactor']);
+    Route::post('auth/2fa/disable', [AuthController::class, 'disableTwoFactor']);
+
+    Route::get('audit-logs/me/logins', [AuditController::class, 'myLogins']);
+    Route::middleware('role:ORG_ADMIN,HR_MANAGER')->get('audit-logs', [AuditController::class, 'list']);
+
+    Route::middleware('role:ORG_ADMIN')->prefix('api-keys')->group(function () {
+        Route::get('/', [ApiKeysController::class, 'list']);
+        Route::post('/', [ApiKeysController::class, 'create']);
+        Route::delete('/{id}', [ApiKeysController::class, 'revoke']);
+    });
 
     Route::get('organizations/me', [OrganizationController::class, 'show']);
     Route::middleware('role:ORG_ADMIN')->put('organizations/me', [OrganizationController::class, 'update']);

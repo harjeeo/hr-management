@@ -21,11 +21,14 @@ class User extends Authenticatable
         'role',
         'is_active',
         'organization_id',
+        'two_factor_secret',
+        'two_factor_enabled',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
     ];
 
     protected function casts(): array
@@ -34,6 +37,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'two_factor_enabled' => 'boolean',
         ];
     }
 

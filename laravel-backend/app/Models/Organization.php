@@ -79,4 +79,14 @@ class Organization extends Model
     {
         return $this->hasMany(PerformanceCycle::class);
     }
+
+    public function auditLogs(): HasMany
+    {
+        return $this->hasMany(AuditLog::class);
+    }
+
+    public function apiKeys(): HasMany
+    {
+        return $this->hasMany(ApiKey::class);
+    }
 }

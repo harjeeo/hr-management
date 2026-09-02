@@ -18,7 +18,11 @@ class Attendance extends Model
         'employee_id',
         'date',
         'check_in',
+        'check_in_lat',
+        'check_in_lng',
         'check_out',
+        'check_out_lat',
+        'check_out_lng',
         'status',
         'notes',
     ];
